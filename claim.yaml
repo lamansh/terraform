@@ -9,6 +9,7 @@ resource "aws_vpc" "test-vpc1" {
 resource "aws_subnet" "test-vpc1-pub-sub1" {
   vpc_id = "${aws_vpc.my_vpc.id}"
   cidr_block = "172.29.1.0/24"
+  map_public_ip_on_launch = true
   availability_zone = "us-west-2a"
   tags {
     Name = "test-vpc1-pub-sub1"
@@ -27,6 +28,7 @@ resource "aws_subnet" "test-vpc1-pr-sub1" {
 resource "aws_subnet" "test-vpc1-pub-sub2" {
   vpc_id = "${aws_vpc.my_vpc.id}"
   cidr_block = "172.29.3.0/24"
+  map_public_ip_on_launch = true
   availability_zone = "us-west-2a"
   tags {
     Name = "test-vpc1-pub-sub2"
@@ -74,7 +76,7 @@ resource "aws_route_table" "test-vpc1-pub-rt1" {
   }
 }
 
-resource "aws_route_table" "test-vpc1-priv-rt1" {
+resource "aws_route_table" "test-vpc1-pr-rt1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
 
   route {
@@ -83,11 +85,52 @@ resource "aws_route_table" "test-vpc1-priv-rt1" {
   }
   
   tags {
-    Name = "test-vpc1-priv-rt1"
+    Name = "test-vpc1-pr-rt1"
   }
 }
 
 # test-vpc1-priv-rt1
+
+resource "aws_security_group" "test-vpc1-pub-sg1" {
+  name        = "test-vpc1-pub-sg1"
+  description = "Allow all inbound traffic"
+
+  ingress {
+    security_groups = "${aws_security_group.test-vpc1-priv-sg1.id}"
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  ingress {
+    security_groups = "${aws_security_group.test-vpc1-priv-sg1.id}"
+    from_port   = 0
+    to_port     = 22
+    protocol    = "tcp"
+    
+  }
+
+  tags {
+    Name = "test-vpc1-pub-sg1"
+  }
+  
+  resource "aws_security_group" "test-vpc1-priv-sg1" {
+  name        = "test-vpc1-priv-sg1"
+  description = "Allow all inbound traffic"
+
+  ingress {
+    security_groups = "${aws_security_group.test-vpc1-pub-sg1.id}"
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags {
+    Name = "test-vpc1-priv-sg1"
+  }
+}
 
 
 
