@@ -1,0 +1,109 @@
+resource "aws_vpc" "test-vpc1" {
+  cidr_block = "172.29.0.0/16"
+  enable_dns_hostnames = "true"
+  tags {
+    Name = "test-vpc1"
+  }
+}
+
+resource "aws_subnet" "test-vpc1-pub-sub1" {
+  vpc_id = "${aws_vpc.my_vpc.id}"
+  cidr_block = "172.29.1.0/24"
+  availability_zone = "us-west-2a"
+  tags {
+    Name = "test-vpc1-pub-sub1"
+  }
+}
+
+resource "aws_subnet" "test-vpc1-pr-sub1" {
+  vpc_id = "${aws_vpc.my_vpc.id}"
+  cidr_block = "172.29.2.0/24"
+  availability_zone = "us-west-2b"
+  tags {
+    Name = "test-vpc1-pr-sub1"
+  }
+}
+
+resource "aws_subnet" "test-vpc1-pub-sub2" {
+  vpc_id = "${aws_vpc.my_vpc.id}"
+  cidr_block = "172.29.3.0/24"
+  availability_zone = "us-west-2a"
+  tags {
+    Name = "test-vpc1-pub-sub2"
+  }
+}
+
+resource "aws_internet_gateway" "inet-gw" {
+  vpc_id = "${aws_vpc.test-vpc1.id}"
+
+  tags {
+    Name = "inet-gw"
+  }
+}
+
+resource "aws_eip" "natip" {
+  instance = "${aws_instance.NAME.id}"
+  vpc      = true
+}
+
+resource "aws_nat_gateway" "nat-gw" {
+  allocation_id = "${aws_eip.natip.id}"
+  subnet_id     = "${aws_subnet.test-vpc1-pr-sub1.id}"
+
+  tags {
+    Name = "nat-gw"
+  }
+}
+
+resource "aws_route_table" "test-vpc1-pub-rt1" {
+  vpc_id = "${aws_vpc.test-vpc1.id}"
+
+  route {
+    cidr_block = "172.29.1.0/24"
+    gateway_id = "${aws_internet_gateway.inet-gw.id}"
+  }
+  
+  route {
+    cidr_block = "172.29.3.0/24"
+    gateway_id = "${aws_internet_gateway.inet-gw.id}"
+  }  
+  
+
+  tags {
+    Name = "test-vpc1-pub-rt1"
+  }
+}
+
+resource "aws_route_table" "test-vpc1-priv-rt1" {
+  vpc_id = "${aws_vpc.test-vpc1.id}"
+
+  route {
+    cidr_block = "172.29.2.0/24"
+    gateway_id = "${aws_nat_gateway.nat-gw.id}"
+  }
+  
+  tags {
+    Name = "test-vpc1-priv-rt1"
+  }
+}
+
+# test-vpc1-priv-rt1
+
+
+
+resource "aws_network_interface" "if-vpc1-pub-sub1" {
+  subnet_id = "${aws_subnet.test-vpc1-pub-sub1.id}"
+  private_ips = ["172.16.10.100"]
+  tags {
+    Name = "primary_network_interface"
+  }
+}
+
+resource "aws_instance" "foo" {
+    ami = "ami-22b9a343" # us-west-2
+    instance_type = "t2.micro"
+    network_interface {
+     network_interface_id = "${aws_network_interface.foo.id}"
+     device_index = 0
+  }
+}
