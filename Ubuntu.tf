@@ -2,6 +2,8 @@
 ###########
 ##########
 #########
+####4444444444444444444444444444444444444444444444444
+
 provider "aws" {
   region = "eu-central-1"
 }
@@ -33,6 +35,28 @@ resource "aws_instance" "web" {
   key_name = "${aws_key_pair.Debian1.key_name}"
   subnet_id ="${aws_subnet.test-vpc1-pub-sub1.id}"
   vpc_security_group_ids = "${aws_security_group.test-vpc1-pub-sg1.id}"
+  tags {
+    Name = "Ubuntu 16/04"
+  }
+}
+
+resource "aws_instance" "web2" {
+  ami           = "${data.aws_ami.ubuntu.id}"
+  instance_type = "t2.micro"
+  key_name = "${aws_key_pair.Debian1.key_name}"
+  subnet_id ="${aws_subnet.test-vpc1-pub-sub2.id}"
+  vpc_security_group_ids = "${aws_security_group.test-vpc1-pub-sg1.id}"
+  tags {
+    Name = "Ubuntu 16/04"
+  }
+}
+
+resource "aws_instance" "web2" {
+  ami           = "${data.aws_ami.ubuntu.id}"
+  instance_type = "t2.micro"
+  key_name = "${aws_key_pair.Debian1.key_name}"
+  subnet_id ="${aws_subnet.test-vpc1-priv-sub1.id}"
+  vpc_security_group_ids = "${aws_security_group.test-vpc1-priv-sg1.id}"
   tags {
     Name = "Ubuntu 16/04"
   }
@@ -81,7 +105,7 @@ resource "aws_vpc" "test-vpc1" {
 }
 
 resource "aws_subnet" "test-vpc1-pub-sub1" {
-  vpc_id = "${aws_vpc.my_vpc.id}"
+  vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.1.0/24"
   map_public_ip_on_launch = true
   availability_zone = "us-west-2a"
@@ -90,17 +114,17 @@ resource "aws_subnet" "test-vpc1-pub-sub1" {
   }
 }
 
-resource "aws_subnet" "test-vpc1-pr-sub1" {
-  vpc_id = "${aws_vpc.my_vpc.id}"
+resource "aws_subnet" "test-vpc1-priv-sub1" {
+  vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.2.0/24"
   availability_zone = "us-west-2b"
   tags {
-    Name = "test-vpc1-pr-sub1"
+    Name = "test-vpc1-priv-sub1"
   }
 }
 ########################
 resource "aws_subnet" "test-vpc1-pub-sub2" {
-  vpc_id = "${aws_vpc.my_vpc.id}"
+  vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.3.0/24"
   map_public_ip_on_launch = true
   availability_zone = "us-west-2a"
@@ -151,7 +175,7 @@ resource "aws_route_table" "test-vpc1-pub-rt1" {
   }
 }
 
-resource "aws_route_table" "test-vpc1-pr-rt1" {
+resource "aws_route_table" "test-vpc1-priv-rt1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
 
   route {
@@ -160,7 +184,7 @@ resource "aws_route_table" "test-vpc1-pr-rt1" {
   }
   
   tags {
-    Name = "test-vpc1-pr-rt1"
+    Name = "test-vpc1-priv-rt1"
   }
 }
 
