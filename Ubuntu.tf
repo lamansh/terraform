@@ -94,7 +94,7 @@ resource "aws_subnet" "test-vpc1-pr-sub1" {
     Name = "test-vpc1-pr-sub1"
   }
 }
-
+########################
 resource "aws_subnet" "test-vpc1-pub-sub2" {
   vpc_id = "${aws_vpc.my_vpc.id}"
   cidr_block = "172.29.3.0/24"
@@ -104,6 +104,7 @@ resource "aws_subnet" "test-vpc1-pub-sub2" {
     Name = "test-vpc1-pub-sub2"
   }
 }
+##########################
 
 resource "aws_internet_gateway" "inet-gw" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
