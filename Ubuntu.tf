@@ -5,6 +5,10 @@ variable "availability_zone" {
   default = "eu-central-1a"
   
 }
+resource "aws_key_pair" "Debian1" {
+key_name = "Debian1"
+public_key = "${file("Debian1.pub")}"
+}
 
 data "aws_ami" "ubuntu" {
   most_recent = true
