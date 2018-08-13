@@ -1,3 +1,12 @@
+variable "region" {
+  default = "eu-central-1"
+}
+variable "availability_zone" {
+  default = "eu-central-1a"
+  
+}
+
+
 resource "aws_vpc" "test-vpc1" {
   cidr_block = "172.29.0.0/16"
   enable_dns_hostnames = "true"
@@ -10,7 +19,7 @@ resource "aws_subnet" "test-vpc1-pub-sub1" {
   vpc_id = "${aws_vpc.my_vpc.id}"
   cidr_block = "172.29.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-2a"
+  availability_zone = "${var.availability_zone}"
   tags {
     Name = "test-vpc1-pub-sub1"
   }
@@ -19,7 +28,7 @@ resource "aws_subnet" "test-vpc1-pub-sub1" {
 resource "aws_subnet" "test-vpc1-pr-sub1" {
   vpc_id = "${aws_vpc.my_vpc.id}"
   cidr_block = "172.29.2.0/24"
-  availability_zone = "us-west-2b"
+  availability_zone = "eu-central-1b"
   tags {
     Name = "test-vpc1-pr-sub1"
   }
@@ -29,7 +38,7 @@ resource "aws_subnet" "test-vpc1-pub-sub2" {
   vpc_id = "${aws_vpc.my_vpc.id}"
   cidr_block = "172.29.3.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-2a"
+  availability_zone = "${var.availability_zone}"
   tags {
     Name = "test-vpc1-pub-sub2"
   }
@@ -114,6 +123,7 @@ resource "aws_security_group" "test-vpc1-pub-sg1" {
   tags {
     Name = "test-vpc1-pub-sg1"
   }
+}
   
   resource "aws_security_group" "test-vpc1-priv-sg1" {
   name        = "test-vpc1-priv-sg1"
@@ -146,7 +156,7 @@ resource "aws_instance" "foo" {
     ami = "ami-22b9a343" # us-west-2
     instance_type = "t2.micro"
     network_interface {
-     network_interface_id = "${aws_network_interface.foo.id}"
-     device_index = 0
+      network_interface_id = "${aws_network_interface.foo.id}"
+      device_index = "0"
   }
 }
