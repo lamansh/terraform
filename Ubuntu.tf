@@ -208,7 +208,7 @@ resource "aws_network_interface" "if-vpc1-pub-sub1" {
 resource "aws_network_interface" "if-vpc1-pr-sub1" {
   subnet_id = "${aws_subnet.test-vpc1-pr-sub1.id}"
   private_ips = ["172.29.2.100"]
-  security_groups = "${aws_route_table.test-vpc1-pr-rt1}"
+  security_groups = "${aws_route_table.test-vpc1-pr-rt1.id}"
   tags {
     Name = "primary_network_interface"
   }
@@ -219,9 +219,9 @@ resource "aws_network_interface" "if-vpc1-pr-sub1" {
 }
 
 resource "aws_network_interface" "if-vpc1-pub-sub2" {
-  subnet_id = "${aws_subnet.test-vpc1-pub-sub2}"
+  subnet_id = "${aws_subnet.test-vpc1-pub-sub2.id}"
   private_ips = ["172.29.3.100"]
-  security_groups = "${aws_route_table.test-vpc1-pub-rt1}"
+  security_groups = "${aws_route_table.test-vpc1-pub-rt1.id}"
   tags {
     Name = "primary_network_interface"
   }
