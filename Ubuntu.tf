@@ -1,99 +1,22 @@
-###########
-###########
-##########
-#########
-####4444444444444444444444444444444444444444444444444
-
-provider "aws" {
-  region = "eu-central-1"
+variable "region" {
+  default = "eu-central-1"
+}
+variable "availability_zone" {
+  default = "eu-central-1a"
+  
 }
 
 data "aws_ami" "ubuntu" {
   most_recent = true
-
-  filter {
+   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"]
   }
-
-  filter {
+   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
-
-  owners = ["099720109477"] # Canonical
-}
-
-resource "aws_key_pair" "Debian1" {
-key_name = "Debian1"
-public_key = "${file("Debian1.pub")}"
-}
-
-resource "aws_instance" "web" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.micro"
-  key_name = "${aws_key_pair.Debian1.key_name}"
-  subnet_id ="${aws_subnet.test-vpc1-pub-sub1.id}"
-  vpc_security_group_ids = "${aws_security_group.test-vpc1-pub-sg1.id}"
-  tags {
-    Name = "Ubuntu 16/04"
-  }
-}
-
-resource "aws_instance" "web2" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.micro"
-  key_name = "${aws_key_pair.Debian1.key_name}"
-  subnet_id ="${aws_subnet.test-vpc1-pub-sub2.id}"
-  vpc_security_group_ids = "${aws_security_group.test-vpc1-pub-sg1.id}"
-  tags {
-    Name = "Ubuntu 16/04"
-  }
-}
-
-resource "aws_instance" "web2" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.micro"
-  key_name = "${aws_key_pair.Debian1.key_name}"
-  subnet_id ="${aws_subnet.test-vpc1-priv-sub1.id}"
-  vpc_security_group_ids = "${aws_security_group.test-vpc1-priv-sg1.id}"
-  tags {
-    Name = "Ubuntu 16/04"
-  }
-}
-  
-resource "aws_ebs_volume" "example" {
-  availability_zone = "eu-central-1b"
-  size              = 10
-}
-
-resource "aws_volume_attachment" "ebs_att" {
-  device_name = "/dev/sdh"
-  volume_id   = "${aws_ebs_volume.example.id}"
-  instance_id = "${aws_instance.web.id}"
-}
-
-resource "aws_security_group" "allow_all" {
-  name        = "allow_all"
-  description = "Allow all inbound traffic"
-
-  ingress {
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
-  egress {
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags {
-    Name = "allow_all"
-  }
+   owners = ["099720109477"] # Canonical
 }
 
 resource "aws_vpc" "test-vpc1" {
@@ -108,31 +31,64 @@ resource "aws_subnet" "test-vpc1-pub-sub1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-2a"
+  availability_zone = "${var.availability_zone}"
+  depends_on = ["aws_internet_gateway.inet-gw"]
   tags {
     Name = "test-vpc1-pub-sub1"
   }
 }
 
-resource "aws_subnet" "test-vpc1-priv-sub1" {
+resource "aws_subnet" "test-vpc1-pr-sub1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.2.0/24"
-  availability_zone = "us-west-2b"
+  availability_zone = "eu-central-1b"
   tags {
-    Name = "test-vpc1-priv-sub1"
+    Name = "test-vpc1-pr-sub1"
   }
 }
-########################
+
 resource "aws_subnet" "test-vpc1-pub-sub2" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.3.0/24"
   map_public_ip_on_launch = true
-  availability_zone = "us-west-2a"
+  availability_zone = "${var.availability_zone}"
+  depends_on = ["aws_internet_gateway.inet-gw"]
   tags {
     Name = "test-vpc1-pub-sub2"
   }
 }
-##########################
+
+resource "aws_instance" "web" {
+  ami           = "${data.aws_ami.ubuntu.id}"
+  instance_type = "t2.micro"
+  key_name = "${aws_key_pair.Debian1.key_name}"
+  subnet_id ="${aws_subnet.test-vpc1-pub-sub1.id}"
+  vpc_security_group_ids = "${aws_security_group.test-vpc1-pub-sg1.id}"
+  tags {
+    Name = "web"
+  }
+}
+
+resource "aws_instance" "web1" {
+  ami           = "${data.aws_ami.ubuntu.id}"
+  instance_type = "t2.micro"
+  key_name = "${aws_key_pair.Debian1.key_name}"
+  subnet_id ="${aws_subnet.test-vpc1-pub-sub2.id}"
+  vpc_security_group_ids = "${aws_security_group.test-vpc1-pub-sg1.id}"
+  tags {
+    Name = "web1"
+  }
+}
+ resource "aws_instance" "web2" {
+  ami           = "${data.aws_ami.ubuntu.id}"
+  instance_type = "t2.micro"
+  key_name = "${aws_key_pair.Debian1.key_name}"
+  subnet_id ="${aws_subnet.test-vpc1-pr-sub1.id}"
+  vpc_security_group_ids = "${aws_security_group.test-vpc1-priv-sg1.id}"
+  tags {
+    Name = "web2"
+  }
+}
 
 resource "aws_internet_gateway" "inet-gw" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
@@ -143,8 +99,10 @@ resource "aws_internet_gateway" "inet-gw" {
 }
 
 resource "aws_eip" "natip" {
-  instance = "${aws_instance.web.id}"
+  #instance = "${aws_instance.web.id}"
+  associate_with_private_ip = "${aws_network_interface.if-vpc1-pub-sub1.private_ips}"
   vpc      = true
+  depends_on = ["aws_internet_gateway.inet-gw"]
 }
 
 resource "aws_nat_gateway" "nat-gw" {
@@ -175,7 +133,7 @@ resource "aws_route_table" "test-vpc1-pub-rt1" {
   }
 }
 
-resource "aws_route_table" "test-vpc1-priv-rt1" {
+resource "aws_route_table" "test-vpc1-pr-rt1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
 
   route {
@@ -184,7 +142,7 @@ resource "aws_route_table" "test-vpc1-priv-rt1" {
   }
   
   tags {
-    Name = "test-vpc1-priv-rt1"
+    Name = "test-vpc1-pr-rt1"
   }
 }
 
@@ -213,6 +171,7 @@ resource "aws_security_group" "test-vpc1-pub-sg1" {
   tags {
     Name = "test-vpc1-pub-sg1"
   }
+}
   
   resource "aws_security_group" "test-vpc1-priv-sg1" {
   name        = "test-vpc1-priv-sg1"
@@ -235,17 +194,40 @@ resource "aws_security_group" "test-vpc1-pub-sg1" {
 
 resource "aws_network_interface" "if-vpc1-pub-sub1" {
   subnet_id = "${aws_subnet.test-vpc1-pub-sub1.id}"
-  private_ips = ["172.16.10.100"]
+  private_ips = ["172.29.1.100"]
+  security_groups = "${aws_route_table.test-vpc1-pub-rt1.id}"
   tags {
     Name = "primary_network_interface"
   }
-}
-
-resource "aws_instance" "foo" {
-    ami = "ami-22b9a343" # us-west-2
-    instance_type = "t2.micro"
-    network_interface {
-     network_interface_id = "${aws_network_interface.foo.id}"
-     device_index = 0
+    attachment {
+    instance     = "${aws_instance.web.id}"
+    device_index = 1
   }
 }
+
+resource "aws_network_interface" "if-vpc1-pr-sub1" {
+  subnet_id = "${aws_subnet.test-vpc1-pr-sub1.id}"
+  private_ips = ["172.29.2.100"]
+  security_groups = "${aws_route_table.test-vpc1-pr-rt1}"
+  tags {
+    Name = "primary_network_interface"
+  }
+    attachment {
+    instance     = "${aws_instance.web1.id}"
+    device_index = 1
+  }
+}
+
+resource "aws_network_interface" "if-vpc1-pub-sub2" {
+  subnet_id = "${aws_subnet.test-vpc1-pub-sub2}"
+  private_ips = ["172.29.3.100"]
+  security_groups = "${aws_route_table.test-vpc1-pub-rt1}"
+  tags {
+    Name = "primary_network_interface"
+  }
+    attachment {
+    instance     = "${aws_instance.web2.id}"
+    device_index = 1
+  }
+}
+
