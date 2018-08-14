@@ -34,7 +34,7 @@ resource "aws_vpc" "test-vpc1" {
 resource "aws_subnet" "test-vpc1-pub-sub1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.1.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
   availability_zone = "${var.availability_zone}"
   depends_on = ["aws_internet_gateway.inet-gw"]
   tags {
@@ -46,6 +46,7 @@ resource "aws_subnet" "test-vpc1-pr-sub1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.2.0/24"
   availability_zone = "eu-central-1b"
+  map_public_ip_on_launch = false
   tags {
     Name = "test-vpc1-pr-sub1"
   }
@@ -54,7 +55,7 @@ resource "aws_subnet" "test-vpc1-pr-sub1" {
 resource "aws_subnet" "test-vpc1-pub-sub2" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
   cidr_block = "172.29.3.0/24"
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
   availability_zone = "${var.availability_zone}"
   depends_on = ["aws_internet_gateway.inet-gw"]
   tags {
@@ -111,7 +112,7 @@ resource "aws_eip" "natip" {
 
 resource "aws_nat_gateway" "nat-gw" {
   allocation_id = "${aws_eip.natip.id}"
-  subnet_id     = "${aws_subnet.test-vpc1-pr-sub1.id}"
+  subnet_id     = "${aws_subnet.test-vpc1-pub-sub1}"
 
   tags {
     Name = "nat-gw"
@@ -121,15 +122,11 @@ resource "aws_nat_gateway" "nat-gw" {
 resource "aws_route_table" "test-vpc1-pub-rt1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
 
+
   route {
-    cidr_block = "172.29.1.0/24"
-    gateway_id = "${aws_internet_gateway.inet-gw.id}"
+  cidr_block = "0.0.0.0/0"
+  gateway_id = "${aws_internet_gateway.inet-gw.id}"
   }
-  
-  route {
-    cidr_block = "172.29.3.0/24"
-    gateway_id = "${aws_internet_gateway.inet-gw.id}"
-  }  
   
 
   tags {
@@ -141,7 +138,7 @@ resource "aws_route_table" "test-vpc1-pr-rt1" {
   vpc_id = "${aws_vpc.test-vpc1.id}"
 
   route {
-    cidr_block = "172.29.2.0/24"
+    cidr_block = "0.0.0.0/0"
     gateway_id = "${aws_nat_gateway.nat-gw.id}"
   }
   
