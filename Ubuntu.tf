@@ -1,6 +1,6 @@
 provider "aws" {
   region = "eu-central-1"
-  access_key = "AKIAJZAQHWMTODN46BIQ"
+  access_key = "AKIAIR6WVHNCPVGC7PXQ"
   secret_key = ""
   
 }
@@ -162,6 +162,7 @@ resource "aws_route_table" "test-vpc1-pr-rt1" {
 resource "aws_security_group" "test-vpc1-pub-sg1" {
   name        = "test-vpc1-pub-sg1"
   description = "Allow all inbound traffic"
+  vpc_id = "${aws_vpc.test-vpc1.id}"
 
   ingress {
     #security_groups = "${aws_security_group.test-vpc1-priv-sg1.id}"
@@ -187,7 +188,7 @@ resource "aws_security_group" "test-vpc1-pub-sg1" {
   resource "aws_security_group" "test-vpc1-priv-sg1" {
   name        = "test-vpc1-priv-sg1"
   description = "Allow all inbound traffic"
-
+  vpc_id = "${aws_vpc.test-vpc1.id}"
   ingress {
     #security_groups = "${aws_security_group.test-vpc1-pub-sg1.id}"
     from_port   = 0
